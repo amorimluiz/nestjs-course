@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put } from '@nestjs/common';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-put-user.dto';
 import { UpdatePatchUserDTO } from './dto/update-patch-user.dto';
@@ -6,7 +6,7 @@ import { UpdatePatchUserDTO } from './dto/update-patch-user.dto';
 @Controller('user')
 export class UserController {
     @Post()
-    public async createUser(@Body() body: CreateUserDTO): Promise<CreateUserDTO> {
+    public async createUser(@Body() body: CreateUserDTO): Promise<any> {
         return body;
     }
 
@@ -16,28 +16,30 @@ export class UserController {
     }
 
     @Get(':id')
-    public async getUserById(@Param() params: {id: string}): Promise<any> {
-        return {user: {}, params};
+    public async getUserById(@Param('id', ParseIntPipe) id: number): Promise<any> {
+        return {user: {}, id};
     }
 
     @Put(':id')
-    public async updateUser(@Param() params: {id: string}, @Body() body: UpdateUserDTO): Promise<any> {
+    public async updateUser(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateUserDTO): Promise<any> {
         return {
             body,
-            params,
+            id,
         };
     }
 
     @Patch(':id')
-    public async updatePartialUser(@Param() params: {id: string}, @Body() body: UpdatePatchUserDTO): Promise<any> {
+    public async updatePartialUser(@Param('id', ParseIntPipe) id: number, @Body() body: UpdatePatchUserDTO): Promise<any> {
         return {
             body,
-            params,
+            id,
         };
     }
 
     @Delete(':id')
-    public async deleteUser(@Param() params: {id: string}): Promise<any> {
-        return params;
+    public async deleteUser(@Param('id', ParseIntPipe) id: number): Promise<any> {
+        return {
+            id
+        };
     }
 }
