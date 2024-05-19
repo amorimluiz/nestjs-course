@@ -12,8 +12,9 @@ model User {
   name      String   @db.VarChar(255)
   email     String   @db.VarChar(255)
   password  String   @db.VarChar(255)
-  createdAt DateTime @default(now()) @db.Timestamp(0)
-  updatedAt DateTime @default(now()) @db.Timestamp(0)
+  birthdate DateTime? @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt() 
 
   @@map("users")
 }
