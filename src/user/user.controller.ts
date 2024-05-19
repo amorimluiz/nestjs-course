@@ -2,12 +2,17 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put } 
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-put-user.dto';
 import { UpdatePatchUserDTO } from './dto/update-patch-user.dto';
+import { UserService } from './user.service';
+import { User } from '@prisma/client';
 
 @Controller('user')
 export class UserController {
+
+    constructor(private readonly userService: UserService) {}
+
     @Post()
-    public async createUser(@Body() body: CreateUserDTO): Promise<any> {
-        return body;
+    public async createUser(@Body() body: CreateUserDTO): Promise<User> {
+        return this.userService.create(body);
     }
 
     @Get()
