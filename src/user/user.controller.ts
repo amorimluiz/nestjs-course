@@ -8,6 +8,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/enums/role.enum';
 import { RoleGuard } from 'src/guards/role.guard';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { Throttle } from '@nestjs/throttler';
 
 @Roles(Role.ADMIN)
 @UseGuards(AuthGuard, RoleGuard)
@@ -21,6 +22,7 @@ export class UserController {
         return this.userService.create(body);
     }
 
+    @Throttle({default: {ttl: 900000, limit: 50}})
     @Get()
     public async getUsers(): Promise<any> {
         return this.userService.list();
