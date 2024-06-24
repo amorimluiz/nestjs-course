@@ -64,7 +64,7 @@ export class UserService {
         }
 
         if (data.password) {
-            data.password = await bcrypt.hash(data.password, await bcrypt.genSalt())
+            data.password = await bcrypt.hash(data.password, await bcrypt.genSalt());
         }
 
         return this.prisma.user.update({
