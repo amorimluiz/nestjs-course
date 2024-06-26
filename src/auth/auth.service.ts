@@ -1,18 +1,22 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { User } from "@prisma/client";
-import { PrismaService } from "src/prisma/prisma.service";
 import { AuthRegisterDTO } from "./dto/auth-register.dto";
-import { UserService } from "src/user/user.service";
 import * as bcrypt from 'bcrypt';
+import { MailerService } from "@nestjs-modules/mailer";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { User } from "../user/entity/user.entity";
+import { UserService } from "../user/user.service";
 
 @Injectable()
 export class AuthService {
 
     constructor(
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
         private readonly jwtService: JwtService,
-        private readonly prisma: PrismaService,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly mailer: MailerService
     ) {} 
 
     public async generateToken(user: User): Promise<{accessToken: string}> {
@@ -47,13 +51,9 @@ export class AuthService {
     }
 
     public async login(email: string, password: string) {
-        const user = await this.prisma.user.findFirst({
-            where: {
-                email
-            }
-        });
+        const user = await this.userRepository.findOneBy({email});
 
-        if (!user || await bcrypt.compare(password, user.password)) {
+        if (!user || !(await bcrypt.compare(password, user.password))) {
             throw new UnauthorizedException('Email e/ou senha incorretos.');
         }
 
@@ -61,30 +61,37 @@ export class AuthService {
     }
 
     public async forget(email: string) {
-        const userCount = await this.prisma.user.count({
-            where: {
-                email
+        const user = await this.userRepository.findOneBy({email});
+        
+        if (!user) {
+            throw new NotFoundException(`Usuário ${email} não encontrado.`);
+        }
+
+        const {accessToken} = await this.generateToken(user);
+
+        await this.mailer.sendMail({
+            subject: 'recuperação senha',
+            to: 'felipe@test.com',
+            template: 'forget',
+            context: {
+                name: 'Felipe',
+                token: accessToken
             }
         });
-
-        if (userCount === 0) {
-            throw new UnauthorizedException('Email não encontrado.')
-        }
 
         return true;
     }
 
     public async reset(password: string, token: string) {
-        const id = 0;
+        const {sub}: {sub: string} = this.validateToken(token);
 
-        const user = await this.prisma.user.update({
-            where: {
-                id
-            },
-            data: {
-                password
-            }
-        });
+        const id = Number(sub);
+
+        if (isNaN(id)) {
+            throw new BadRequestException('Token não possui um subject valido.');
+        }
+
+        const user = await this.userService.update(id, {password});
         
         return this.generateToken(user);
     }

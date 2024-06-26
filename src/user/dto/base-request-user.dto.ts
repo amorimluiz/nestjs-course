@@ -1,5 +1,5 @@
 import { IsDateString, IsEmail, IsEnum, IsOptional, IsString, IsStrongPassword } from "class-validator";
-import { Role } from "src/enums/role.enum";
+import { Role } from "../../enums/role.enum";
 
 export class BaseRequestUserDTO {
 
@@ -13,10 +13,10 @@ export class BaseRequestUserDTO {
     public password: string;
 
     @IsOptional()
-    @IsDateString()
-    public birthdate?: string;
+    @IsEnum(Role)
+    public role: Role;
 
     @IsOptional()
-    @IsEnum(Role)
-    public role: number;
+    @IsDateString()
+    public birthdate?: string;
 }
