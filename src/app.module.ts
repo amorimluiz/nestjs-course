@@ -1,23 +1,33 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
-import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter'
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { env } from 'process';
+import { ConfigModule } from '@nestjs/config';
+import { SnakeCaseStrategy } from 'db/snakecase';
+import { User } from './user/entity/user.entity';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: env.DB_HOST,
+      port: Number(env.DB_PORT),
+      username: env.DB_USERNAME,
+      password: env.DB_PASSWORD,
+      database: env.DB_DATABASE,
+      namingStrategy: new SnakeCaseStrategy(),
+      entities: [User]
+    }),
     ThrottlerModule.forRoot([{
       ttl: 1800000,
       limit: 200
     }]),
-    forwardRef(() => AuthModule),
-    forwardRef(() => UserModule),
-    PrismaModule,
     MailerModule.forRoot({
       transport: {
         host: 'smtp.ethereal.email',
@@ -38,11 +48,15 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter'
         },
       },
     }),
+    forwardRef(() => AuthModule),
+    forwardRef(() => UserModule),
   ],
-  controllers: [AppController],
-  providers: [AppService, {
-    provide: APP_GUARD,
-    useClass: ThrottlerGuard
-  }],
+  controllers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
+    }
+  ],
 })
 export class AppModule {}
