@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { AuthRegisterDTO } from "./dto/auth-register.dto";
 import * as bcrypt from 'bcrypt';
@@ -55,7 +54,6 @@ export class AuthService {
         const user = await this.userRepository.findOneBy({email});
 
         if (!user || !(await bcrypt.compare(password, user.password))) {
-        if (!user || !(await bcrypt.compare(password, user.password))) {
             throw new UnauthorizedException('Email e/ou senha incorretos.');
         }
 
@@ -85,13 +83,6 @@ export class AuthService {
     }
 
     public async reset(password: string, token: string) {
-        const {sub}: {sub: string} = this.validateToken(token);
-
-        const id = Number(sub);
-
-        if (isNaN(id)) {
-            throw new BadRequestException('Token não possui um subject valido.');
-        }
         const {sub}: {sub: string} = this.validateToken(token);
 
         const id = Number(sub);

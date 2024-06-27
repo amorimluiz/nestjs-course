@@ -31,7 +31,7 @@ export class UserService {
             user.birthdate = new Date(data.birthdate);
         }
         
-        return await this.userRepository.save(user);
+        return this.userRepository.save(user);
     }
 
     public async list(): Promise<User[]> {
