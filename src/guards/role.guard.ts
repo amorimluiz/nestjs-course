@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { AuthService } from "../auth/auth.service";
 import { ROLES_KEY } from "../decorators/roles.decorator";
@@ -24,7 +24,7 @@ export class RoleGuard implements CanActivate {
             const {role} = this.authService.validateToken(authorization.split(' ')[1]);
             return requiredRoles.includes(role);
         } catch (e) {
-            throw e;
+            throw new ForbiddenException(e);
         }
     }
 }
