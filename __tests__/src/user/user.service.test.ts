@@ -37,8 +37,6 @@ describe('user service suite', () => {
             birthdate: '1990-01-01',
             role: Role.USER,
         };
-
-        userRepository.existsBy = jest.fn().mockResolvedValue(false);
         
         // Act
         const user = await userService.create(data);
@@ -48,20 +46,21 @@ describe('user service suite', () => {
         expect(userRepository.existsBy).toHaveBeenCalledWith({ email: data.email });
         expect(userRepository.create).toHaveBeenCalled();
         expect(userRepository.save).toHaveBeenCalled();
+        expect(userRepository.find()).toContain(user);
         expect(bcrypt.hash).toHaveBeenCalledWith(data.password, 'mockedSalt');
     });
 
     it('should throw an error if email already exists', async () => {
         // Arrange
+        const user = userRepository.find()[0];
+
         const data: CreateUserDTO = {
             name: 'John Doe',
-            email: 'johndoe@test.com',
+            email: user.email,
             password: '123456',
             birthdate: '1990-01-01',
             role: Role.USER,
         };
-
-        userRepository.existsBy = jest.fn().mockResolvedValue(true);
 
         // Act & Assert
         await expect(userService.create(data)).rejects.toThrow(BadRequestException);
@@ -87,13 +86,14 @@ describe('user service suite', () => {
         const foundUser = await userService.findById(id);
 
         // Assert
-        expect(userRepository.findOneBy).toHaveBeenCalledWith({ id: id });
-        expect(foundUser).toBeInstanceOf(User);
+        expect(userRepository.findOneBy).toHaveBeenCalledWith({ id });
+        expect(userRepository.findOneBy).toHaveReturnedWith(Promise.resolve(foundUser));
     });
 
     it('should update an user', async () => {
         // Arrange
         const id = 1;
+
         const data: UpdateUserDTO = {
             name: 'John Doe',
             email: 'johndoe@test.com',
@@ -110,12 +110,14 @@ describe('user service suite', () => {
         expect(userRepository.findOneBy).toHaveBeenCalledWith({ id: id });
         expect(userRepository.update).toHaveBeenCalled();
         expect(userRepository.save).toHaveBeenCalled();
+        expect(userRepository.findOneBy).toHaveReturnedWith(Promise.resolve(updatedUser));
         expect(bcrypt.hash).toHaveBeenCalledWith(data.password, 'mockedSalt');
     });
 
     it('should throw an error if user to update does not exist', async () => {
         // Arrange
         const id = 999;
+
         const data: UpdateUserDTO = {
             name: 'John Doe',
             email: 'johndoe@test.com',
@@ -133,8 +135,6 @@ describe('user service suite', () => {
         // Arrange
         const id = 1;
 
-        userRepository.existsBy = jest.fn().mockResolvedValue(true);
-
         // Act
         const deletedUser = await userService.delete(id);
 
@@ -146,8 +146,6 @@ describe('user service suite', () => {
     it('should throw an error if user to delete does not exist', async () => {
         // Arrange
         const id = 999;
-
-        userRepository.existsBy = jest.fn().mockResolvedValue(false);
 
         // Act & Assert
         await expect(userService.delete(id)).rejects.toThrow(NotFoundException);
